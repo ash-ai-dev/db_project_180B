@@ -3,8 +3,8 @@
 -- Total: 8 test cases covering all requirements
 -- CRUD, Constraints, Scheduling, Transactions, Indexing
 
--- SECTION A: CRUD TEST CASE (1) --
 
+-- SECTION A: CRUD TEST CASE (1) --
 
 -- TEST CASE A1: Complete CRUD operations on a room
 -- Expected: Insert succeeds, update works, delete works
@@ -43,21 +43,17 @@ VALUES ('1', 'NONEXISTENT_ROOM_999', 0.5);
 
 -- TEST CASE B2: Primary key constraint violation
 -- Expected: ERROR - duplicate key violation
--- ========================================
 
 -- Try to insert duplicate student
 INSERT INTO students (student_id) VALUES ('1');
 -- Expected: ERROR - duplicate key value violates unique constraint
 
 
--- ========================================
--- SECTION C: SCHEDULING LOGIC TEST CASES (2)
--- ========================================
+-- SECTION C: SCHEDULING LOGIC TEST CASES (2) --
 
 -- TEST CASE C1: Room demand analysis
 -- Shows which rooms are most contested (scheduling conflicts)
 -- Expected: List of rooms requested by multiple classes
--- ========================================
 
 SELECT
     cro.room_id,
@@ -76,7 +72,6 @@ LIMIT 10;
 -- TEST CASE C2: Time slot conflict detection
 -- Identifies classes that want the same time slot
 -- Expected: List of overlapping time preferences
--- ========================================
 
 SELECT
     cto1.class_id AS class1,
@@ -96,14 +91,11 @@ LIMIT 15;
 -- Expected: Pairs of classes wanting identical time slots
 
 
--- ========================================
--- SECTION D: TRANSACTION TEST CASE (1)
--- ========================================
+-- SECTION D: TRANSACTION TEST CASE (1) --
 
 -- TEST CASE D1: Atomic Transaction Rollback
 -- Ensures partial failures don't leave inconsistent data
 -- Expected: No partial data remains after rollback
--- ========================================
 
 BEGIN;
 
@@ -127,14 +119,11 @@ SELECT * FROM students WHERE student_id = 'TEST_STUDENT_999';
 -- Expected: 0 rows (rollback successful, no partial data)
 
 
--- ========================================
--- SECTION E: CONCURRENCY TEST CASE (1)
--- ========================================
+-- SECTION E: CONCURRENCY TEST CASE (1) --
 
 -- TEST CASE E1: Serializable Isolation Level
 -- Prevents concurrent update conflicts
 -- Instructions: Run in TWO pgAdmin Query Tool windows simultaneously
--- ========================================
 
 -- WINDOW 1: Run this first
 /*
@@ -167,14 +156,11 @@ ROLLBACK;
 */
 
 
--- ========================================
--- SECTION F: INDEXING PERFORMANCE TEST (1)
--- ========================================
+-- SECTION F: INDEXING PERFORMANCE TEST (1) --
 
 -- TEST CASE F1: Index Performance Comparison
 -- Demonstrates query optimization with indexing
--- Expected: Significant performance improvement with index
--- ========================================
+-- Expected: Significant performance improvement with index 
 
 -- Drop index if it exists
 DROP INDEX IF EXISTS idx_classes_offering_test;
@@ -204,29 +190,3 @@ DROP INDEX idx_classes_offering_test;
 -- Expected:
 -- - Without index: Sequential Scan, higher cost
 -- - With index: Index Scan, lower cost, faster execution
-
-
--- ========================================
--- SUMMARY
--- ========================================
--- Test Cases Complete
---
--- Summary:
---   A1: CRUD Operations (Insert/Update/Delete)
---   B1: Foreign Key Constraint Test
---   B2: Primary Key Constraint Test
---   C1: Room Demand Analysis
---   C2: Time Slot Conflict Detection
---   D1: Atomic Transaction Rollback
---   E1: Serializable Isolation (requires 2 windows)
---   F1: Index Performance Comparison
---
--- TOTAL: 8 focused test cases
--- All requirements covered:
---   ✓ CRUD functionality
---   ✓ Constraint enforcement
---   ✓ Scheduling logic
---   ✓ Transaction safety
---   ✓ Concurrency control
---   ✓ Query optimization
--- ========================================
