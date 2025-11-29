@@ -160,7 +160,8 @@ ROLLBACK;
 
 -- TEST CASE F1: Index Performance Comparison
 -- Demonstrates query optimization with indexing
--- Expected: Significant performance improvement with index 
+-- Expected: Significant performance improvement with index
+-- ========================================
 
 -- Drop index if it exists
 DROP INDEX IF EXISTS idx_classes_offering_test;
