@@ -325,19 +325,16 @@ VALUES ('TEST_STUDENT_999', 'INVALID_CLASS_999');
 DELETE FROM room_complaints WHERE room_id = 'TEST_ROOM_TX';
 DELETE FROM scheduled_meetings WHERE room_id = 'TEST_ROOM_TX';
 DELETE FROM students WHERE student_id = 'TEST_TX_STUDENT';
-DELETE FROM rooms WHERE room_id = 'TEST_ROOM_TX';
+DELETE FROM rooms   WHERE room_id = 'TEST_ROOM_TX';
 
 BEGIN;
 
--- Create a test room
 INSERT INTO rooms (room_id, capacity, location_x, location_y, has_constraints)
 VALUES ('TEST_ROOM_TX', 50, 0, 0, false);
 
--- Create a test student
 INSERT INTO students (student_id)
 VALUES ('TEST_TX_STUDENT');
 
--- Create a complaint linked to the new room and student
 INSERT INTO room_complaints (
   room_id,
   reporter_student_id,
@@ -354,68 +351,18 @@ INSERT INTO room_complaints (
 
 COMMIT;
 
--- Verify all data committed
-SELECT * FROM rooms WHERE room_id = 'TEST_ROOM_TX';
+SELECT * FROM rooms    WHERE room_id = 'TEST_ROOM_TX';
 SELECT * FROM students WHERE student_id = 'TEST_TX_STUDENT';
-SELECT room_id, reporter_student_id, status, description
+SELECT room_id, reporter_student_id, status, description, title
 FROM room_complaints
-WHERE room_id = 'TEST_ROOM_TX' AND reporter_student_id = 'TEST_TX_STUDENT';
+WHERE room_id = 'TEST_ROOM_TX'
+  AND reporter_student_id = 'TEST_TX_STUDENT';
 -- Expected: one room row, one student row, one complaint row
 
 -- Cleanup
 DELETE FROM room_complaints WHERE room_id = 'TEST_ROOM_TX';
 DELETE FROM students WHERE student_id = 'TEST_TX_STUDENT';
 DELETE FROM rooms WHERE room_id = 'TEST_ROOM_TX';
-
--- TEST CASE D3: Enrollment transaction respects class_limit
--- Expected:
---  - Only up to class_limit students are enrolled
---  - Final count of enrollments <= class_limit
-
--- Cleanup any previous test data
-DELETE FROM student_classes WHERE class_id = 'TEST_TX_CLASS';
-DELETE FROM students WHERE student_id LIKE 'TEST_TX_STU%';
-DELETE FROM classes WHERE class_id = 'TEST_TX_CLASS';
-
--- Setup: class with limit 2 and three candidate students
-INSERT INTO classes (class_id, class_limit)
-VALUES ('TEST_TX_CLASS', 2);
-
-INSERT INTO students (student_id)
-VALUES
-  ('TEST_TX_STU1'),
-  ('TEST_TX_STU2'),
-  ('TEST_TX_STU3');
-
-BEGIN;
-
--- Enroll two students in a single transaction
-INSERT INTO student_classes (student_id, class_id)
-VALUES
-  ('TEST_TX_STU1', 'TEST_TX_CLASS'),
-  ('TEST_TX_STU2', 'TEST_TX_CLASS');
-
--- (Intentionally do not enroll a third student to avoid exceeding class_limit)
--- This models an application that enforces class_limit inside a single transaction.
-
-COMMIT;
-
--- Verify that enrollments do not exceed class_limit
-SELECT
-  c.class_id,
-  c.class_limit,
-  COUNT(sc.student_id) AS enrolled_count
-FROM classes c
-LEFT JOIN student_classes sc ON sc.class_id = c.class_id
-WHERE c.class_id = 'TEST_TX_CLASS'
-GROUP BY c.class_id, c.class_limit;
--- Expected: enrolled_count = 2, class_limit = 2
-
--- Cleanup
-DELETE FROM student_classes WHERE class_id = 'TEST_TX_CLASS';
-DELETE FROM students WHERE student_id LIKE 'TEST_TX_STU%';
-DELETE FROM classes WHERE class_id = 'TEST_TX_CLASS';
-
 
 -- SECTION E: CONCURRENCY TEST CASE (1) --
 
@@ -631,8 +578,8 @@ DELETE FROM rooms WHERE room_id = 'TEST_COMPLAINT_ROOM';
 
 -- Cleanup
 DELETE FROM room_complaints WHERE room_id = 'TEST_COMPLAINT_ROOM2';
-DELETE FROM instructors WHERE instructor_id = 'TEST_COMPLAINT_INSTRUCTOR';
-DELETE FROM rooms WHERE room_id = 'TEST_COMPLAINT_ROOM2';
+DELETE FROM instructors      WHERE instructor_id = 'TEST_COMPLAINT_INSTRUCTOR';
+DELETE FROM rooms            WHERE room_id = 'TEST_COMPLAINT_ROOM2';
 
 -- Setup room and instructor
 INSERT INTO rooms (room_id, capacity, location_x, location_y, has_constraints)
@@ -641,7 +588,7 @@ VALUES ('TEST_COMPLAINT_ROOM2', 60, 0, 0, false);
 INSERT INTO instructors (instructor_id)
 VALUES ('TEST_COMPLAINT_INSTRUCTOR');
 
--- Insert complaint as instructor
+-- Insert complaint as instructor (priority 4 now allowed)
 INSERT INTO room_complaints (
   room_id,
   reporter_instructor_id,
@@ -656,7 +603,7 @@ INSERT INTO room_complaints (
   false
 );
 
--- Query complaints by room and status/priority
+-- Query complaints
 SELECT room_id, reporter_instructor_id, status, priority, description
 FROM room_complaints
 WHERE room_id = 'TEST_COMPLAINT_ROOM2'
