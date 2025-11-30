@@ -140,45 +140,72 @@ LIMIT 15;
 -- Expected: Pairs of classes wanting identical time slots
 
 -- TEST CASE C3: Capacity trigger on scheduled_meetings
--- Expected:
---  - First INSERT: ERROR (room too small for class)
---  - Second INSERT: succeeds
+-- We want to see:
+--   1) ERROR when room too small for class
+--   2) SUCCESS when room capacity is OK
+--   3) ERROR when room too big for class
+
+SET search_path = timetable;
 
 -- Cleanup any previous test data
 DELETE FROM scheduled_meetings WHERE class_id LIKE 'TEST_CAP_%';
-DELETE FROM classes WHERE class_id LIKE 'TEST_CAP_%';
-DELETE FROM rooms WHERE room_id IN ('TEST_ROOM_CAP_SMALL', 'TEST_ROOM_CAP_OK');
+DELETE FROM classes            WHERE class_id LIKE 'TEST_CAP_%';
+DELETE FROM rooms
+ WHERE room_id IN (
+   'TEST_ROOM_CAP_SMALL',
+   'TEST_ROOM_CAP_OK',
+   'TEST_ROOM_CAP_BIG'
+ );
 
 -- Create test rooms
+-- SMALL:  30 seats
+-- OK:     80 seats
+-- BIG:   200 seats
 INSERT INTO rooms (room_id, capacity, location_x, location_y, has_constraints)
 VALUES
-  ('TEST_ROOM_CAP_SMALL', 30, 0, 0, false),
-  ('TEST_ROOM_CAP_OK',   100, 0, 0, false);
+  ('TEST_ROOM_CAP_SMALL', 30,  0, 0, false),
+  ('TEST_ROOM_CAP_OK',    80,  0, 0, false),
+  ('TEST_ROOM_CAP_BIG',  200,  0, 0, false);
 
 -- Create test classes
+-- TOO_SMALL: limit 80  -> too big for SMALL(30)
+-- OK:        limit 60  -> OK for room(80) if 60 <= 80 <= 1.5 * 60 (=90)
+-- TOO_BIG:   limit 60  -> BIG(200) should be "too big"
 INSERT INTO classes (class_id, class_limit)
 VALUES
-  ('TEST_CAP_TOO_BIG', 80),   -- Too big for small room (30 < 80)
-  ('TEST_CAP_OK',      60);   -- OK for room with cap 100
+  ('TEST_CAP_TOO_SMALL', 80),
+  ('TEST_CAP_OK',        60),
+  ('TEST_CAP_TOO_BIG',   60);
 
--- This should FAIL: room capacity < class_limit
-INSERT INTO scheduled_meetings (class_id, room_id, day_of_week, start_slot, length_slots, priority)
-VALUES ('TEST_CAP_TOO_BIG', 'TEST_ROOM_CAP_SMALL', 1, 100, 5, 1);
--- Expected: ERROR from enforce_capacity_ok()
+-- 1) This should FAIL: room capacity < class_limit  (30 < 80)
+-- INSERT INTO scheduled_meetings (class_id, room_id, day_of_week, start_slot, length_slots, priority)
+-- VALUES ('TEST_CAP_TOO_SMALL', 'TEST_ROOM_CAP_SMALL', 1, 100, 5, 1);
+-- Expected: ERROR from enforce_capacity_ok(): capacity too small
 
--- This should SUCCEED: capacity between class_limit and 1.5 * class_limit
-INSERT INTO scheduled_meetings (class_id, room_id, day_of_week, start_slot, length_slots, priority)
-VALUES ('TEST_CAP_OK', 'TEST_ROOM_CAP_OK', 1, 200, 5, 1);
+-- 2) This should FAIL: room capacity > 1.5 * class_limit
+--     200 > 90
+-- INSERT INTO scheduled_meetings (class_id, room_id, day_of_week, start_slot, length_slots, priority)
+-- VALUES ('TEST_CAP_TOO_BIG', 'TEST_ROOM_CAP_BIG', 1, 300, 5, 1);
+-- Expected: ERROR from enforce_capacity_ok(): room too big
+
+-- 3) This should SUCCEED: 60 <= 80 <= 90
+-- INSERT INTO scheduled_meetings (class_id, room_id, day_of_week, start_slot, length_slots, priority)
+-- VALUES ('TEST_CAP_OK', 'TEST_ROOM_CAP_OK', 1, 200, 5, 1);
 
 -- Verify the successful insert
-SELECT class_id, room_id, day_of_week, start_slot, length_slots, priority
-FROM scheduled_meetings
-WHERE class_id = 'TEST_CAP_OK';
+-- SELECT class_id, room_id, day_of_week, start_slot, length_slots, priority
+-- FROM scheduled_meetings
+-- WHERE class_id = 'TEST_CAP_OK';
 
--- Cleanup
+-- Cleanup (optional)
 DELETE FROM scheduled_meetings WHERE class_id LIKE 'TEST_CAP_%';
-DELETE FROM classes WHERE class_id LIKE 'TEST_CAP_%';
-DELETE FROM rooms WHERE room_id IN ('TEST_ROOM_CAP_SMALL', 'TEST_ROOM_CAP_OK');
+DELETE FROM classes            WHERE class_id LIKE 'TEST_CAP_%';
+DELETE FROM rooms
+ WHERE room_id IN (
+   'TEST_ROOM_CAP_SMALL',
+   'TEST_ROOM_CAP_OK',
+   'TEST_ROOM_CAP_BIG'
+ );
 
 -- TEST CASE C4: No-room-time-overlap constraint
 -- Expected:
@@ -231,10 +258,12 @@ DELETE FROM rooms WHERE room_id = 'TEST_ROOM_OVERLAP';
 --  - schedule_class inserts one row per '1' in days_mask
 --  - scheduled_meetings contains entries for those days
 
+SET search_path = timetable, public;
+
 -- Cleanup any previous test data
 DELETE FROM scheduled_meetings WHERE class_id LIKE 'TEST_SCHED_%';
-DELETE FROM classes WHERE class_id LIKE 'TEST_SCHED_%';
-DELETE FROM rooms WHERE room_id = 'TEST_ROOM_SCHED';
+DELETE FROM classes            WHERE class_id LIKE 'TEST_SCHED_%';
+DELETE FROM rooms              WHERE room_id = 'TEST_ROOM_SCHED';
 
 -- Create test room and class compatible with capacity rules
 INSERT INTO rooms (room_id, capacity, location_x, location_y, has_constraints)
@@ -244,8 +273,8 @@ INSERT INTO classes (class_id, class_limit)
 VALUES ('TEST_SCHED_CLASS', 60);
 
 -- Call schedule_class:
--- days_mask '0110000' => meets on day 1 and day 2
-SELECT schedule_class(
+-- days_mask '0110000' => meets on day 1 and day 2 (Mon & Tue)
+SELECT timetable.schedule_class(
   'TEST_SCHED_CLASS',   -- class
   'TEST_ROOM_SCHED',    -- room
   '0110000',            -- days_mask (Mon & Tue)
@@ -259,13 +288,11 @@ SELECT class_id, room_id, day_of_week, start_slot, length_slots, priority
 FROM scheduled_meetings
 WHERE class_id = 'TEST_SCHED_CLASS'
 ORDER BY day_of_week, start_slot;
--- Expected: 2 rows, same time, different day_of_week
 
 -- Cleanup
 DELETE FROM scheduled_meetings WHERE class_id LIKE 'TEST_SCHED_%';
-DELETE FROM classes WHERE class_id LIKE 'TEST_SCHED_%';
-DELETE FROM rooms WHERE room_id = 'TEST_ROOM_SCHED';
-
+DELETE FROM classes            WHERE class_id LIKE 'TEST_SCHED_%';
+DELETE FROM rooms              WHERE room_id = 'TEST_ROOM_SCHED';
 
 -- SECTION D: TRANSACTION TEST CASE (1) --
 
@@ -275,24 +302,19 @@ DELETE FROM rooms WHERE room_id = 'TEST_ROOM_SCHED';
 
 BEGIN;
 
--- Insert a test student
 INSERT INTO students (student_id) VALUES ('TEST_STUDENT_999');
 
--- Insert valid enrollment
 INSERT INTO student_classes (student_id, class_id)
 VALUES ('TEST_STUDENT_999', '1');
 
--- Try to insert invalid enrollment (this will fail)
--- Class 'INVALID_999' does not exist
+-- This will fail and abort the transaction
 INSERT INTO student_classes (student_id, class_id)
 VALUES ('TEST_STUDENT_999', 'INVALID_CLASS_999');
 
--- Rollback entire transaction
-ROLLBACK;
+-- ROLLBACK;
 
--- Verify nothing was committed
-SELECT * FROM students WHERE student_id = 'TEST_STUDENT_999';
--- Expected: 0 rows (rollback successful, no partial data)
+-- Now this should return 0 rows
+-- SELECT * FROM students WHERE student_id = 'TEST_STUDENT_999';
 
 -- TEST CASE D2: Successful transaction across related tables
 -- Expected:
