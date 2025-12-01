@@ -667,19 +667,25 @@ DELETE FROM rooms WHERE room_id = 'TEST_COMPLAINT_ROOM3';
 
 -- Cleanup
 DELETE FROM room_complaints WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
-DELETE FROM rooms WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
+DELETE FROM students        WHERE student_id = 'TEST_COMPLAINT_STUDENT_STATUS';
+DELETE FROM rooms           WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
 
--- Setup room and a new complaint
+-- Setup room, student, and a new complaint
 INSERT INTO rooms (room_id, capacity, location_x, location_y, has_constraints)
 VALUES ('TEST_COMPLAINT_ROOM_STATUS', 40, 0, 0, false);
 
+INSERT INTO students (student_id)
+VALUES ('TEST_COMPLAINT_STUDENT_STATUS');
+
 INSERT INTO room_complaints (
   room_id,
+  reporter_student_id,
   priority,
   description,
   is_anonymous
 ) VALUES (
   'TEST_COMPLAINT_ROOM_STATUS',
+  'TEST_COMPLAINT_STUDENT_STATUS',
   5,
   'Heating not working',
   true
@@ -715,4 +721,5 @@ LIMIT 1;
 
 -- Cleanup
 DELETE FROM room_complaints WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
-DELETE FROM rooms WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
+DELETE FROM students        WHERE student_id = 'TEST_COMPLAINT_STUDENT_STATUS';
+DELETE FROM rooms           WHERE room_id = 'TEST_COMPLAINT_ROOM_STATUS';
