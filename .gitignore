@@ -1,0 +1,44 @@
+# Python virtual environment
+venv/
+env/
+ENV/
+.venv
+
+# CSV data files
+*.csv
+
+# Database backups
+backups/
+*.dump
+
+# XML files
+*.xml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
