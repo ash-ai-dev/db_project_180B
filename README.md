@@ -12,7 +12,7 @@ Fill in your actual group members here.
 
 - Name 1  -  email1@sjsu.edu  
 - Name 2  -  email2@sjsu.edu  
-- Name 3  -  email3@sjsu.edu  
+- Shervan Shahparnia  -  shervan.shahparnia@sjsu.edu  
 - Name 4  -  email4@sjsu.edu  
 
 
