@@ -10,10 +10,10 @@ This project was created for CMPE 180B to explore real world database design, da
 
 Fill in your actual group members here.
 
-- Name 1  -  Role 1  -  email1@sjsu.edu  
-- Name 2  -  Role 2  -  email2@sjsu.edu  
-- Name 3  -  Role 3  -  email3@sjsu.edu  
-- Name 4  -  Role 4  -  email4@sjsu.edu  
+- Name 1  -  email1@sjsu.edu  
+- Name 2  -  email2@sjsu.edu  
+- Name 3  -  email3@sjsu.edu  
+- Name 4  -  email4@sjsu.edu  
 
 
 ## Project Overview
