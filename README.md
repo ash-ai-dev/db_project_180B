@@ -10,10 +10,10 @@ This project was created for CMPE 180B to explore real world database design, da
 
 Fill in your actual group members here.
 
-- Name 1  -  email1@sjsu.edu  
-- Name 2  -  email2@sjsu.edu  
+- Robbie Tambunting  -  gerard.tambunting@sjsu.edu
+- Matthew Sauer -  matthew.sauer@sjsu.edu  
 - Shervan Shahparnia  -  shervan.shahparnia@sjsu.edu  
-- Name 4  -  email4@sjsu.edu  
+- Ashutosh Mane -  ashutosh.mane@sjsu.edu
 
 
 ## Project Overview
