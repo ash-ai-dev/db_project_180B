@@ -120,7 +120,6 @@ def extract(xml_path: str, out_dir: str):
     next_constraint_pk = 1
     seen_instructor_ids: set[str] = set()
 
-    # Stream parse
     context = ET.iterparse(xml_path, events=("end",))
     for event, elem in context:
         tag = strip_ns(elem.tag)
@@ -129,8 +128,7 @@ def extract(xml_path: str, out_dir: str):
         if tag == "room":
             # Only process top-level room definitions (they have 'capacity')
             if "capacity" not in elem.attrib:
-                # This is a <room> inside <class> (i.e., a room option).
-                # Do NOT clear it here; the <class> handler will read it.
+                # This is a <room> inside <class> 
                 continue
 
             rid = elem.attrib.get("id")
@@ -162,7 +160,6 @@ def extract(xml_path: str, out_dir: str):
 
         # CLASS DEFINITIONS (only real ones under <classes>)
         elif tag == "class":
-            # Heuristic: only treat as a real "class definition" if it has class-def attributes
             is_definition = (
                 ("classLimit" in elem.attrib) or
                 ("offering" in elem.attrib) or
@@ -170,7 +167,6 @@ def extract(xml_path: str, out_dir: str):
             )
             if not is_definition:
                 # This is a reference (likely under <students> or <constraint>)
-                # DO NOT clear: parent (<student> / <constraint>) still needs it.
                 continue
 
             cid = elem.attrib.get("id")
@@ -262,7 +258,7 @@ def extract(xml_path: str, out_dir: str):
         w.close()
 
 def main():
-    # Always work under the current directory
+    #  current directory
     cwd = os.getcwd()
 
     # Input XML (change the file name below if yours is different, but I assume you downloaded it from where we did)
